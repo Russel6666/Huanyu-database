@@ -17,6 +17,7 @@ export function ProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => {
     loadProducts()
@@ -66,9 +67,19 @@ export function ProductsPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    await api.deleteProduct(deleteTarget.id)
-    setDeleteTarget(null)
-    loadProducts()
+    try {
+      await api.deleteProduct(deleteTarget.id)
+      setDeleteTarget(null)
+      setDeleteError('')
+      loadProducts()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : ''
+      if (msg.includes('transaction_items') || msg.includes('foreign key') || msg.includes('23503')) {
+        setDeleteError('该商品存在历史交易记录，无法删除。如不再使用，可修改名称标注为「已停用」。')
+      } else {
+        setDeleteError('删除失败，请重试。')
+      }
+    }
   }
 
   return (
@@ -227,8 +238,9 @@ export function ProductsPage() {
         title="删除商品"
         message={`确认删除商品「${deleteTarget?.name}」吗？此操作无法撤销。`}
         confirmLabel="删除"
+        errorMessage={deleteError}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
+        onCancel={() => { setDeleteTarget(null); setDeleteError('') }}
         danger
       />
     </div>
