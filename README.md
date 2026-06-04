@@ -1,2 +1,2 @@
 # Huanyu-database
-a database for my parents' business
+This is a database for my parents' business to make their life easier.
